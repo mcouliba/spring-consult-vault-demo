@@ -5,7 +5,7 @@ spring:
       port: 8500
     vault:
       authentication: TOKEN
-      scheme: http
+      scheme: https
       host: vault-hashicorp-vault.apps.cluster-roma-c335.roma-c335.example.opentlc.com
       port: 443
       token: 00000000-0000-0000-0000-000000000000
