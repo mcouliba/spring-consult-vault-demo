@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: myApp
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+    vault:
+      authentication: TOKEN
+      scheme: http
+      host: localhost
+      port: 8200
+      token: 00000000-0000-0000-0000-000000000000

@@ -1,0 +1,8 @@
+spring:
+  cloud:
+    consul:
+      discovery:
+        enabled: true
+        instanceId: ${spring.application.name}:${random.value}
+      host: localhost
+      port: 8500
