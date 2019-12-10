@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: myApp
   cloud:
     consul:
       host: localhost
