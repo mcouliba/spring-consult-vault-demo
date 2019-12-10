@@ -6,5 +6,6 @@ spring:
     vault:
       authentication: TOKEN
       scheme: http
-      host: vault.hashicorp-vault.svc
-      token: s.wQ1TgNsVzsogCGn9jtjxDfBB
+      host: vault-hashicorp-vault.apps.cluster-roma-c335.roma-c335.example.opentlc.com
+      port: 443
+      token: 00000000-0000-0000-0000-000000000000
