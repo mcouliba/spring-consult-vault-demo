@@ -1,11 +1,11 @@
 spring:
   cloud:
     consul:
-      host: localhost
+      host: redhat-consul-server.hashicorp-consul.svc
       port: 8500
     vault:
       authentication: TOKEN
       scheme: http
-      host: localhost
+      host: vault.hashicorp-vault.svc
       port: 8200
-      token: 00000000-0000-0000-0000-000000000000
+      token: s.wQ1TgNsVzsogCGn9jtjxDfBB
