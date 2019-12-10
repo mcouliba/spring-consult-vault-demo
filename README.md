@@ -2,10 +2,12 @@
 
 ## Prerequisites
 
-[TIP]
-====
+
+---
+**NOTE**
+
 This demo has been tested on Openshift 4.2.
-====
+---
 
 * https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands[OpenShift CLI^]
 * https://git-scm.com/downloads[git CLI^]
@@ -170,10 +172,12 @@ spring:
       token: 00000000-0000-0000-0000-000000000000
 ```
 
-[NOTE]
-====
-<OpenShift Vault Host> = $(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
-====
+---
+**NOTE**
+
+**<OpenShift Vault Host>** = $(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
+
+---
 
 Create the application project/namespace
 
