@@ -2,12 +2,7 @@
 
 ## Prerequisites
 
-
----
-**NOTE**
-
-This demo has been tested on Openshift 4.2.
----
+> This demo has been tested on Openshift 4.2.
 
 * https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands[OpenShift CLI^]
 * https://git-scm.com/downloads[git CLI^]
@@ -116,23 +111,6 @@ export VAULT_TOKEN=<Initial Root Token>
 vault token create -id="00000000-0000-0000-0000-000000000000" -policy="root"
 ```
 
-<!-- 
-```
-oc create sa vault-auth -n sbcv-demo
-oc adm policy add-cluster-role-to-user system:auth-delegator -z vault-auth -n sbcv-demo
-export SA_TOKEN=$(oc get sa/vault-auth -o yaml | grep vault-auth-token | awk '{print $3}')
-export SA_JWT_TOKEN=$(oc get secret $SA_TOKEN -o jsonpath="{.data.token}" | base64 --decode; echo)
-export SA_CA_CRT=$(oc get secret $SA_TOKEN -o jsonpath="{.data['ca\.crt']}" | base64 --decode; echo)
-```
-
-```
-export VAULT_TOKEN=s.wQ1TgNsVzsogCGn9jtjxDfBB
-vault write auth/kubernetes/config \
-  token_reviewer_jwt="$SA_JWT_TOKEN" \
-  kubernetes_host="$(oc whoami --show-server)" \
-  kubernetes_ca_cert="$SA_CA_CRT"
-``` -->
-
 ## Configure Application Secrets within Vault
 
 Create different application secrets containing **message.greeting** value
@@ -172,12 +150,8 @@ spring:
       token: 00000000-0000-0000-0000-000000000000
 ```
 
----
-**NOTE**
+> **OpenShift Vault Host** = $(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
 
-**<OpenShift Vault Host>** = $(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
-
----
 
 Create the application project/namespace
 
