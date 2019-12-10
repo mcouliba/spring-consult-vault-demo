@@ -8,4 +8,4 @@ spring:
       scheme: http
       host: vault.hashicorp-vault.svc
       port: 8200
-      token: s.wQ1TgNsVzsogCGn9jtjxDfBB
+      token: 00000000-0000-0000-0000-000000000000
