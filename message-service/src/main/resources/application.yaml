@@ -1,0 +1,2 @@
+message:
+  greeting: "Hello, my name is ${spring.application.name}! Nice to meet you!"
