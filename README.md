@@ -1,6 +1,21 @@
 # Spring Boot, Consult and Vault Demo
 
+## Prerequisites
+
+[TIP]
+====
+This demo has been tested on Openshift 4.2.
+====
+
+* https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands[OpenShift CLI^]
+* https://git-scm.com/downloads[git CLI^]
+* https://github.com/helm/helm[helm^]
+* https://www.vaultproject.io/docs/install/index.html[vault CLI^]
+* https://maven.apache.org/install.html[Maven^]
+
 ## Install HashiCorp Consul on Openshift
+
+Clone the consul-helm project and set up the configuration.
 
 ```
 git clone https://github.com/hashicorp/consul-helm.git
@@ -29,6 +44,8 @@ server:
 EOF
 ```
 
+Then, deploy Consul on OpenShift
+
 ```
 oc login
 oc new-project hashicorp-consul
@@ -37,32 +54,52 @@ helm install redhat . -f helm-consul-values.yaml -n hashicorp-consul
 oc expose svc/redhat-consul-server -n hashicorp-consul
 ```
 
+Finally, check your deployment by getting the Consul URL with the following command and entering it in your WebBrowser
+
+```
+echo http://$(oc get route redhat-consul-server -n hashicorp-consul -o jsonpath='{.spec.host}{"\n"}')
+```
+
 ## Install HashiCorp Vault on Openshift
+
+Deploy Vault on OpenShift
 
 ```
 oc login
 oc new-project hashicorp-vault
 oc adm policy add-scc-to-user anyuid -z vault-sa -n hashicorp-vault
-oc apply -f https://raw.githubusercontent.com/lbroudoux/secured-fruits-catalog-k8s/master/k8s/vault-deployment.yml -n hashicorp-vault
+oc apply -f https://raw.githubusercontent.com/mcouliba/spring-consult-vault-demo/master/openshift/vault-deployment.yaml -n hashicorp-vault
 oc create route reencrypt vault --port=8200 --service=vault -n hashicorp-vault
 ```
 
+Then, check your deployment by getting the Consul URL with the following command and entering it in your WebBrowser
+
 ```
-export VAULT_ADDR=https://$(oc get route vault -n hashicorp-vault --no-headers -o custom-columns=HOST:.spec.host)
+echo https://$(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
+```
+
+Next, initialize Vault
+```
+export VAULT_ADDR=https://$(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
 vault operator init -tls-skip-verify -key-shares=1 -key-threshold=1
 ```
 
-```
-Unseal Key 1: qA7kjOPajVCDBmWsuHUcC5kht/CA+rnhWEDpXTelMRE=
+You should have the following output
 
-Initial Root Token: s.wQ1TgNsVzsogCGn9jtjxDfBB
+```
+Unseal Key 1: 85owGwPfHlgx/fod7ONDnha75Kg9Nrgz4pjtLayeKTc=
+
+Initial Root Token: s.hwdzCUcVdjy3fOmp0gkC1xeP
 [...]
 ```
 
+Unseal Vault and login
 ```
-vault operator unseal -tls-skip-verify qA7kjOPajVCDBmWsuHUcC5kht/CA+rnhWEDpXTelMRE=
-vault login s.wQ1TgNsVzsogCGn9jtjxDfBB
+vault operator unseal -tls-skip-verify <Unseal Key 1>
+vault login <Initial Root Token>
 ```
+
+As result, you obtain
 
 ```
 Success! You are now authenticated. The token information displayed below
@@ -70,9 +107,117 @@ is already stored in the token helper. You do NOT need to run "vault login"
 again. Future Vault requests will automatically use this token.
 ```
 
-## Run the demo
+Finally, let's create a token for our application
 
 ```
-$ oc login 
-$ oc new-project sbcv-demo
+export VAULT_TOKEN=<Initial Root Token>
+vault token create -id="00000000-0000-0000-0000-000000000000" -policy="root"
+```
+
+<!-- 
+```
+oc create sa vault-auth -n sbcv-demo
+oc adm policy add-cluster-role-to-user system:auth-delegator -z vault-auth -n sbcv-demo
+export SA_TOKEN=$(oc get sa/vault-auth -o yaml | grep vault-auth-token | awk '{print $3}')
+export SA_JWT_TOKEN=$(oc get secret $SA_TOKEN -o jsonpath="{.data.token}" | base64 --decode; echo)
+export SA_CA_CRT=$(oc get secret $SA_TOKEN -o jsonpath="{.data['ca\.crt']}" | base64 --decode; echo)
+```
+
+```
+export VAULT_TOKEN=s.wQ1TgNsVzsogCGn9jtjxDfBB
+vault write auth/kubernetes/config \
+  token_reviewer_jwt="$SA_JWT_TOKEN" \
+  kubernetes_host="$(oc whoami --show-server)" \
+  kubernetes_ca_cert="$SA_CA_CRT"
+``` -->
+
+## Configure Application Secrets within Vault
+
+Create different application secrets containing **message.greeting** value
+
+```
+vault kv put secret/japanese-service message.greeting='Kon''nichiwa, watashinonamaeha ${spring.application.name}! Hajimemashite!'
+vault kv put secret/english-service message.greeting='Hello, my name is ${spring.application.name}! Nice to meet you!'
+vault kv put secret/italian-service message.greeting='Ciao, mi chiamo ${spring.application.name}! Piacere di conoscerti!'
+vault kv put secret/french-service message.greeting='Bonjour, je m''appelle ${spring.application.name}! Content de te rencontrer!'
+```
+
+## Run the demo
+
+Clone the current project
+
+```
+git clone https://github.com/mcouliba/spring-consult-vault-demo.git
+cd spring-consult-vault-demo
+```
+
+Update the **message-service/src/main/resources/bootstrap.yaml** file as following to connect our application to Consul and Vault Server:
+
+```
+spring:
+  cloud:
+    consul:
+      host: redhat-consul-server.hashicorp-consul.svc
+      port: 8500
+      discovery:
+        healthCheckPath: /actuator/health
+        healthCheckInterval: 20s
+    vault:
+      authentication: TOKEN
+      scheme: https
+      host: <OpenShift Vault Host>
+      port: 443
+      token: 00000000-0000-0000-0000-000000000000
+```
+
+[NOTE]
+====
+<OpenShift Vault Host> = $(oc get route vault -n hashicorp-vault -o jsonpath='{.spec.host}{"\n"}')
+====
+
+Create the application project/namespace
+
+```
+oc login 
+oc new-project sbcv-demo
+oc policy add-role-to-user view -n sbcv-demo -z default
+```
+
+Build the **message-service** image
+
+```
+cd message-service
+oc new-build java --name=message-service --binary=true -n sbcv-demo
+./mvnw clean package
+oc start-build message-service --from-file=target/message-service-0.0.1-SNAPSHOT.jar --follow
+```
+
+Then, deploy the **japanese-service** application
+
+```
+oc new-app sbcv-demo/message-service:latest --name=japanese-service  --env=spring.application.name=japanese-service -n sbcv-demo -l app=demo,app.kubernetes.io/instance=japanese-service,app.kubernetes.io/name=java,app.kubernetes.io/part-of=demo
+oc expose svc/japanese-service
+```
+
+Next, test your service
+
+```
+curl -w "\n" http://$(oc get route japanese-service -n sbcv-demo -o jsonpath='{.spec.host}{"\n"}')/api/greeting
+```
+
+Finally, deploy the other applications (italian-service, english-service and french-service)
+
+```
+oc new-app sbcv-demo/message-service:latest --name=italian-service  --env=spring.application.name=italian-service -n sbcv-demo -l app=demo,app.kubernetes.io/instance=italian-service,app.kubernetes.io/name=java,app.kubernetes.io/part-of=demo
+oc expose svc/italian-service
+```
+
+```
+oc new-app sbcv-demo/message-service:latest --name=english-service  --env=spring.application.name=english-service -n sbcv-demo -l app=demo,app.kubernetes.io/instance=english-service,app.kubernetes.io/name=java,app.kubernetes.io/part-of=demo
+oc expose svc/english-service
+```
+
+```
+oc new-app sbcv-demo/message-service:latest --name=french-service  --env=spring.application.name=french-service -n sbcv-demo -l app=demo,app.kubernetes.io/instance=french-service,app.kubernetes.io/name=java,app.kubernetes.io/part-of=demo
+oc expose svc/french-service
 ```

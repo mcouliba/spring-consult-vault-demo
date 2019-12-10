@@ -1,2 +1,2 @@
 message:
-  greeting: "Hello, my name is ${spring.application.name}! Nice to meet you!"
+  greeting: "Hi, you've reached ${spring.application.name} at Default Service"
