@@ -5,6 +5,6 @@ spring:
       port: 8500
     vault:
       authentication: TOKEN
-      scheme: https
+      scheme: http
       host: vault.hashicorp-vault.svc
-      token: 00000000-0000-0000-0000-000000000000
+      token: s.wQ1TgNsVzsogCGn9jtjxDfBB
