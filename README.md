@@ -5,7 +5,7 @@
 > This demo has been tested on Openshift 4.2.
 
 * [OpenShift CLI](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands)
-* [git CLI^](https://git-scm.com/downloads)
+* [git CLI](https://git-scm.com/downloads)
 * [Helm](https://github.com/helm/helm)
 * [Vault](https://www.vaultproject.io/docs/install/index.html)
 * [Maven](https://maven.apache.org/install.html)
